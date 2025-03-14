@@ -2,7 +2,7 @@
 ![.](banner&Co.png)
 
 ![](https://img.shields.io/badge/RaspberryPI-8A2BE2) ![](https://img.shields.io/badge/C-FFDD33) ![](https://img.shields.io/badge/React-F1)
-![](https://img.shields.io/badge/Python-C3F) 
+![](https://img.shields.io/badge/Python-C3F) ![](https://img.shields.io/badge/TypeScript-*FFF)
 
 This project uses Artificial Intelligence (AI), OpenCV, cryptocurrencies, NFC and smart sensors to optimize urban traffic management. The system analyzes vehicle flow in real time, adapts traffic lights and collects data on pollution and weather conditions for more efficient and sustainable traffic.
 
