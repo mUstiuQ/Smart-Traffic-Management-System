@@ -18,13 +18,13 @@ This project uses Artificial Intelligence (AI), OpenCV, cryptocurrencies, NFC an
 
 ### 🔧 Tehnologii utilizate:
 
-Microcontrolere: ESP32 / Raspberry Pi
+Microcontrolere: Raspberry Pi 5
 
-Software: OpenCV, TensorFlow Lite, Python
+Software: OpenCV, Python, C++
 
 Senzori: LIDAR, IR, senzori de noxe, ploaie, umiditate
 
-Comunicare: LoRaWAN / Wi-Fi / 5G
+Comunicare: Wi-Fi
 
 Blockchain & Crypto: Integrare pentru plăți securizate
 
