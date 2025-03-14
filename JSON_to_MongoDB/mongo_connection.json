@@ -1,0 +1,6 @@
+{
+    "connection_string": "mongodb+srv://dariusosadici:Parola0509@monitoring-cluster.qm4du.mongodb.net/?retryWrites=true&w=majority&appName=Monitoring-Cluster",
+    "database_name": "GreenCommuteDB",
+    "collection_name": "SensorReadings"
+}
+

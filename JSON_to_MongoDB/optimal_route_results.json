@@ -1,0 +1,42 @@
+[
+    {
+        "optimal_route": ["Intersection A", "Intersection B", "Intersection D"],
+        "total_weight": 9.2
+    },
+    {
+        "optimal_route": ["Intersection C", "Intersection B", "Intersection D"],
+        "total_weight": 10.5
+    },
+    {
+        "optimal_route": ["Intersection B", "Intersection A", "Intersection D"],
+        "total_weight": 11.0
+    },
+    {
+        "optimal_route": ["Intersection D", "Intersection C"],
+        "total_weight": 6.8
+    },
+    {
+        "optimal_route": ["Intersection A", "Intersection C", "Intersection D"],
+        "total_weight": 12.3
+    },
+    {
+        "optimal_route": ["Intersection C", "Intersection D"],
+        "total_weight": 7.1
+    },
+    {
+        "optimal_route": ["Intersection B", "Intersection C", "Intersection A", "Intersection D"],
+        "total_weight": 15.4
+    },
+    {
+        "optimal_route": ["Intersection D", "Intersection B"],
+        "total_weight": 7.5
+    },
+    {
+        "optimal_route": ["Intersection A", "Intersection B", "Intersection C", "Intersection D"],
+        "total_weight": 14.0
+    },
+    {
+        "optimal_route": ["Intersection C", "Intersection A", "Intersection D"],
+        "total_weight": 13.6
+    }
+]
