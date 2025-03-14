@@ -4,32 +4,31 @@
 
 This project uses Artificial Intelligence (AI), OpenCV, cryptocurrencies, NFC and smart sensors to optimize urban traffic management. The system analyzes vehicle flow in real time, adapts traffic lights and collects data on pollution and weather conditions for more efficient and sustainable traffic.
 
-### Funcționalități principale:
+### Main features:
 
-✅ Analiză video cu OpenCV – detectare vehicule, pietoni și recunoaștere numere de înmatriculare
+✅ Video analysis with OpenCV – vehicle, pedestrian detection and license plate recognition
 
-✅ AI pentru optimizare – ajustare automată a semafoarelor în funcție de trafic și condițiile meteo
+✅ AI for optimization – automatic adjustment of traffic lights based on traffic and weather conditions
 
-✅ Plăți cu criptomonede și NFC – taxare automată pentru drumuri, parcări sau zone cu trafic aglomerat
+✅ Cryptocurrency and NFC payments – automatic toll collection for roads, parking lots or areas with heavy traffic
 
-✅ Monitorizare a poluării – senzori de noxe pentru măsurarea calității aerului
+✅ Pollution monitoring – noxious gas sensors to measure air quality
 
-✅ Detectare condiții meteo – senzori de ploaie și umiditate pentru adaptarea timpilor de semaforizare
+✅ Weather detection – rain and humidity sensors to adapt traffic light times
 
-### 🔧 Tehnologii utilizate:
+### 🔧 Technologies used:
 
-Microcontrolere: Raspberry Pi 5
+Microcontrollers: Raspberry Pi 5
 
 Software: OpenCV, Python, C++
 
-Senzori: LIDAR, IR, senzori de noxe, ploaie, umiditate
+Sensors: LIDAR, IR, noxious gas sensors, rain, humidity
 
-Comunicare: Wi-Fi
+Communication: Wi-Fi
 
-Blockchain & Crypto: Integrare pentru plăți securizate
+Blockchain & Crypto: Integration for secure payments
 
-Acest sistem contribuie la trafic mai fluid, reducerea poluării și creșterea siguranței rutiere.
-
+This system contributes to smoother traffic, reduced pollution and increased road safety.
 ### License
 **Copyright © 2007 Free Software Foundation.**
 
