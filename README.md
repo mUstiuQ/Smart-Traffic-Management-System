@@ -1,5 +1,5 @@
 # Smart-Traffic-Management-System
-![.](banner.jpg)
+![.](banner&Co.png)
 
 ![](https://img.shields.io/badge/RaspberryPI-8A2BE2) ![](https://img.shields.io/badge/C-FFDD33) ![](https://img.shields.io/badge/React-F1)
 ![](https://img.shields.io/badge/Python-C3F) 
