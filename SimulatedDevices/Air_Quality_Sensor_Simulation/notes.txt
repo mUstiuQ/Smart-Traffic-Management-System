@@ -1,0 +1,5 @@
+Telemetry messages sent (Sum), smarttrafficmanagement
+
+
+
+Our project is a smart traffic management system that aims to help drivers find the most optimal routes while taking into account sustainability factors like air quality and road conditions. We also use AI to help into decision making after the data processing. On the startup side, we want to base the accessibility to these routes on a membership that has a discount for residents. We would also like to focus on centralizing the data from sensor networks and surveillance cameras. Main technologies used: Python, Azure IoT Hub, MongoDB, Azure Databricks, .NET C#, React JS

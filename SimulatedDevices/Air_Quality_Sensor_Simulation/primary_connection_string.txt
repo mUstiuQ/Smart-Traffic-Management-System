@@ -1,0 +1,1 @@
+CONNECTION_STRING=HostName=SmartTrafficManagement.azure-devices.net;DeviceId=aqs;SharedAccessKey=tI3D73JkDvkeXpfyC6oKNsEc/6XbvfjlvV6sg9fpqqg=
