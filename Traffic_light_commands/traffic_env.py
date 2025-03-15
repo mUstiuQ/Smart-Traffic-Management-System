@@ -30,7 +30,7 @@ class TrafficEnv:
             if intersection_name == intersection_to_set_green:
                 self.light_states[i] = 'Green'
             else:
-                self.light_states[i] = 'Red'  # Set others to Red (or Yellow if preferred)
+                self.light_states[i] = 'Red'  # Set others to Red
         
     def get_traffic_light_status(self):
         return self.light_states

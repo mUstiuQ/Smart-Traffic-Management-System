@@ -8,7 +8,6 @@ CONNECTION_STRING = "HostName=SmartTrafficManagement.azure-devices.net;DeviceId=
 TRAFFIC_LIGHT_CYCLE = [
     {"state": "Red", "duration": 5},    # Red for 5 seconds
     {"state": "Green", "duration": 5},  # Green for 5 seconds
-    {"state": "Yellow", "duration": 2}  # Yellow for 2 seconds
 ]
 
 # Function to simulate the traffic light

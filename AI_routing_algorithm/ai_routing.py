@@ -22,7 +22,7 @@ def calculate_air_quality_penalty(co, no2, pm25):
 traffic_data = {
     'Intersection A': {'traffic_volume': 30, 'average_speed': 50, 'vehicle_count': 20, 'light_status': 'green'},
     'Intersection B': {'traffic_volume': 50, 'average_speed': 40, 'vehicle_count': 35, 'light_status': 'red'},
-    'Intersection C': {'traffic_volume': 40, 'average_speed': 45, 'vehicle_count': 25, 'light_status': 'yellow'},
+    'Intersection C': {'traffic_volume': 40, 'average_speed': 45, 'vehicle_count': 25, 'light_status': 'red'},
     'Intersection D': {'traffic_volume': 20, 'average_speed': 55, 'vehicle_count': 15, 'light_status': 'green'}
 }
 
@@ -52,7 +52,7 @@ def calculate_route_weights(graph, traffic_data, co, no2, pm25):
             vehicle_count = traffic_data[start]['vehicle_count']
             light_status = traffic_data[start]['light_status']
             
-            red_light_factor = 1 if light_status == 'red' else (0.5 if light_status == 'yellow' else 0)
+            red_light_factor = 1 if light_status == 'red' else 0
             
             # Predict weight using ML model
             weight = model.predict([[traffic_volume, avg_speed, red_light_factor + air_quality_penalty, vehicle_count]])[0]
