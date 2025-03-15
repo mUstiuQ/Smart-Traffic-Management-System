@@ -1,48 +1,57 @@
-import streamlit as st
 import numpy as np
 from traffic_env import TrafficEnv
 import json
+from azure.iot.hub import IoTHubRegistryManager
 
-# Streamlit UI
-st.title("Traffic Light Control Simulation")
+# Function to load the connection string from a file
+def load_connection_string(filename="primary_connection_string.txt"):
+    with open(filename, 'r') as file:
+        for line in file:
+            if line.startswith("CONNECTION_STRING="):
+                return line.split("=", 1)[1].strip()
 
-# Input: JSON format of the optimal route and total weight
-optimal_route_input = st.text_area("Enter the Optimal Route JSON (e.g., {\"optimal_route\": [\"Intersection A\", \"Intersection D\"], \"total_weight\": 8.0})", 
-                                   "{\"optimal_route\": [\"Intersection A\", \"Intersection D\"], \"total_weight\": 8.0}")
+# Load the connection string
+CONNECTION_STRING = load_connection_string()
+DEVICE_ID = "RaspberryPi5"  # The device ID you registered in Azure IoT Hub
 
-# Parse the input to get the optimal route and total weight
-try:
-    optimal_route_data = json.loads(optimal_route_input)
-    optimal_route = optimal_route_data["optimal_route"]
-    total_weight = optimal_route_data["total_weight"]
-except json.JSONDecodeError:
-    st.error("Invalid JSON format. Please correct the format.")
-    optimal_route = []
-    total_weight = None
+def send_message_to_device(message):
+    try:
+        # Create an IoT Hub registry manager
+        registry_manager = IoTHubRegistryManager(CONNECTION_STRING)
 
-# Input: Vehicle counts at each intersection (ensure the number of counts matches the number of intersections)
-vehicle_counts_input = st.text_input("Enter vehicle counts at each intersection (comma separated, e.g., 10, 5, 3, 8):", "10, 5, 3, 8")
-vehicle_counts = np.array([int(x.strip()) for x in vehicle_counts_input.split(',')])
+        # Send the message to the device
+        registry_manager.send_c2d_message(DEVICE_ID, message)
 
-# Ensure vehicle counts match the number of intersections
-if len(vehicle_counts) != len(optimal_route):
-    st.error(f"Number of vehicle counts does not match the number of intersections in the optimal route. Expected {len(optimal_route)} counts.")
-else:
-    # Number of intersections
-    num_intersections = len(vehicle_counts)
+        print(f"Message sent to device {DEVICE_ID}: {message}")
 
-    # Initialize the TrafficEnv with the given parameters
-    env = TrafficEnv(num_intersections=num_intersections, optimal_route=optimal_route, vehicle_counts=vehicle_counts)
+    except Exception as e:
+        print(f"Error sending message: {e}")
 
-    # Update the traffic light states based on the optimal route and vehicle counts
-    env.update_traffic_lights()
+def main():
+    # Load the optimal route from the JSON file
+    with open("../AI_routing_algorithm/optimal_route_results.json", 'r') as file:
+        optimal_route_data = json.load(file)
+        optimal_route = optimal_route_data["optimal_route"]
+
+    # Determine the traffic light state based on the optimal route
+    traffic_light_states = ['Red'] * len(optimal_route)
+    if optimal_route:
+        first_intersection = optimal_route[0]
+        for i in range(len(optimal_route)):
+            intersection_name = f"Intersection {chr(ord('A') + i)}"
+            if intersection_name == first_intersection:
+                traffic_light_states[i] = 'Green'
 
     # Show the updated traffic light states
-    st.write("Updated Traffic Light States:")
-    for i, intersection in enumerate(env.get_traffic_light_status()):
-        st.write(f"Intersection {chr(ord('A') + i)}: {intersection}")
+    print("Updated Traffic Light States:")
+    for i, state in enumerate(traffic_light_states):
+        print(f"Intersection {chr(ord('A') + i)}: {state}")
 
-    # Show the vehicle counts at each intersection
-    st.write("Vehicle Counts at Each Intersection:")
-    for i, count in enumerate(vehicle_counts):
-        st.write(f"Intersection {chr(ord('A') + i)}: {count} vehicles")
+    # Send the updated traffic light states to the device
+    message = json.dumps({
+        "traffic_light_states": traffic_light_states
+    })
+    send_message_to_device(message)
+
+if __name__ == "__main__":
+    main()

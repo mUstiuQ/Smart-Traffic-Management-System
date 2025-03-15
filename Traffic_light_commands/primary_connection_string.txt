@@ -1,0 +1,1 @@
+CONNECTION_STRING=HostName=SmartTrafficManagement.azure-devices.net;DeviceId=RaspberryPi5;SharedAccessKey=h8EcXwnB7NnEeG5kpwXr3xXYT+sEqLp5peC+wcAV0i8=
