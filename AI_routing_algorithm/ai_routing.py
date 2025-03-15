@@ -10,21 +10,29 @@ with open('air_quality_PROC.json', 'r') as file:
 
 # Calculate average air quality levels for penalty calculation
 average_co = np.mean([entry['data']['co'] for entry in air_quality_data])
-average_no2 = np.mean([entry['data']['no2'] for entry in air_quality_data])
-average_pm25 = np.mean([entry['data']['pm25'] for entry in air_quality_data])
+average_no2 = np.mean([entry['data'].get('no2', 0) for entry in air_quality_data])
+average_pm25 = np.mean([entry['data'].get('pm25', 0) for entry in air_quality_data])
 
 # Define a function for air quality penalty
-
 def calculate_air_quality_penalty(co, no2, pm25):
     return (co * 0.15) + (no2 * 0.07) + (pm25 * 0.03)  # Adjusted weightings
 
-# Traffic data (example values)
-traffic_data = {
-    'Intersection A': {'traffic_volume': 30, 'average_speed': 50, 'vehicle_count': 20, 'light_status': 'green'},
-    'Intersection B': {'traffic_volume': 50, 'average_speed': 40, 'vehicle_count': 35, 'light_status': 'red'},
-    'Intersection C': {'traffic_volume': 40, 'average_speed': 45, 'vehicle_count': 25, 'light_status': 'red'},
-    'Intersection D': {'traffic_volume': 20, 'average_speed': 55, 'vehicle_count': 15, 'light_status': 'green'}
-}
+# Load traffic data from JSON file
+with open('intersection_data.json', 'r') as file:
+    traffic_data = json.load(file)
+
+# Convert traffic data to the required format
+traffic_data_dict = [
+    {
+        'timestamp': entry['timestamp'],
+        'traffic_volume': entry['traffic_volume'],
+        'average_speed': entry['average_speed'],
+        'vehicle_count': entry['vehicle_count'],
+        'light_status': entry['light_status'],
+        'rain': entry['rain']
+    }
+    for entry in traffic_data
+]
 
 # Road network graph with distances
 road_graph = {
@@ -47,10 +55,15 @@ def calculate_route_weights(graph, traffic_data, co, no2, pm25):
     
     for start, neighbors in graph.items():
         for end, distance in neighbors.items():
-            traffic_volume = traffic_data[start]['traffic_volume']
-            avg_speed = traffic_data[start]['average_speed']
-            vehicle_count = traffic_data[start]['vehicle_count']
-            light_status = traffic_data[start]['light_status']
+            traffic_entry = next((t for t in traffic_data if t['timestamp']), None)
+            if not traffic_entry:
+                continue
+            
+            traffic_volume = traffic_entry['traffic_volume']
+            avg_speed = traffic_entry['average_speed']
+            vehicle_count = traffic_entry['vehicle_count']
+            light_status = traffic_entry['light_status']
+            rain = traffic_entry['rain']
             
             red_light_factor = 1 if light_status == 'red' else 0
             
@@ -96,7 +109,7 @@ def find_optimal_route(start, end, graph, route_weights):
 start_intersection = 'Intersection A'
 end_intersection = 'Intersection D'
 
-route_weights = calculate_route_weights(road_graph, traffic_data, average_co, average_no2, average_pm25)
+route_weights = calculate_route_weights(road_graph, traffic_data_dict, average_co, average_no2, average_pm25)
 optimal_route, total_weight = find_optimal_route(start_intersection, end_intersection, road_graph, route_weights)
 
 # Save results

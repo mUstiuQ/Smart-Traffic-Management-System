@@ -1,0 +1,34 @@
+[
+    {
+        "timestamp": "2025-03-14 23:50:10",
+        "traffic_volume": 50,
+        "average_speed": 40.00,
+        "vehicle_count": 35,
+        "light_status": "red",
+        "rain": 700
+    },
+    {
+        "timestamp": "2025-03-14 23:52:30",
+        "traffic_volume": 40,
+        "average_speed": 45.00,
+        "vehicle_count": 25,
+        "light_status": "red",
+        "rain": 650
+    },
+    {
+        "timestamp": "2025-03-14 23:55:05",
+        "traffic_volume": 20,
+        "average_speed": 55.00,
+        "vehicle_count": 15,
+        "light_status": "green",
+        "rain": 680
+    },
+    {
+        "timestamp": "2025-03-15 00:00:20",
+        "traffic_volume": 60,
+        "average_speed": 35.00,
+        "vehicle_count": 50,
+        "light_status": "red",
+        "rain": 710
+    }
+]
