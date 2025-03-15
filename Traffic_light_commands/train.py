@@ -7,8 +7,8 @@ optimal_route = ["Intersection A", "Intersection D"]  # Example route
 total_weight = 8.0
 
 # Initialize environment
-env = TrafficEnv(num_intersections=4, optimal_route=optimal_route, total_weight=total_weight)
-agent = QLearningAgent(num_states=env.observation_space.shape[0], num_actions=env.action_space.n)
+env = TrafficEnv(num_intersections=4, optimal_route=optimal_route)
+agent = QLearningAgent(observation_space=env.observation_space, action_space=env.action_space)
 
 # Training loop
 num_episodes = 1000
