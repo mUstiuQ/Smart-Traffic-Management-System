@@ -1,151 +1,111 @@
 import pandas as pd
 import numpy as np
 import json
-from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from heapq import heappop, heappush
 
 # Load air quality data from JSON file
 with open('air_quality_PROC.json', 'r') as file:
     air_quality_data = json.load(file)
 
-# Calculate average air quality levels for use in penalty calculation
+# Calculate average air quality levels for penalty calculation
 average_co = np.mean([entry['data']['co'] for entry in air_quality_data])
 average_no2 = np.mean([entry['data']['no2'] for entry in air_quality_data])
 average_pm25 = np.mean([entry['data']['pm25'] for entry in air_quality_data])
 
-# Sample traffic light, camera, and GPS data
-traffic_lights_data = {
-    'intersection_id': ['A', 'B', 'C', 'D'],
-    'status': ['green', 'red', 'yellow', 'green'],
-    'timestamp': ['2023-06-21 08:00:00', '2023-06-21 08:01:00', '2023-06-21 08:02:00', '2023-06-21 08:03:00']
-}
+# Define a function for air quality penalty
 
-cameras_data = {
-    'camera_id': ['Cam1', 'Cam2', 'Cam3'],
-    'location': ['Intersection A', 'Intersection B', 'Intersection C'],
-    'vehicle_count': [10, 5, 15],
-    'timestamp': ['2023-06-21 08:00:00', '2023-06-21 08:01:00', '2023-06-21 08:02:00']
-}
+def calculate_air_quality_penalty(co, no2, pm25):
+    return (co * 0.15) + (no2 * 0.07) + (pm25 * 0.03)  # Adjusted weightings
 
-gps_data = {
-    'vehicle_id': ['V1', 'V2', 'V3'],
-    'location': ['Intersection A', 'Intersection B', 'Intersection C'],
-    'speed': [50, 60, 45],
-    'timestamp': ['2023-06-21 08:00:00', '2023-06-21 08:01:00', '2023-06-21 08:02:00']
-}
-
-# Create DataFrames
-df_traffic_lights = pd.DataFrame(traffic_lights_data)
-df_cameras = pd.DataFrame(cameras_data)
-df_gps = pd.DataFrame(gps_data)
-
-# Merge the DataFrames based on timestamp and location columns
-df_merged = pd.merge(df_traffic_lights, df_cameras, left_on='timestamp', right_on='timestamp', how='outer')
-df_merged = pd.merge(df_merged, df_gps, left_on=['timestamp', 'location'], right_on=['timestamp', 'location'], how='outer')
-
-# Fill NaN values for vehicle count and speed
-df_merged['vehicle_count'] = df_merged['vehicle_count'].fillna(0)
-df_merged['speed'] = df_merged['speed'].fillna(df_merged['speed'].mean())
-
-# Filter for green lights only
-green_lights = df_merged[df_merged['status'] == 'green']
-
-# Calculate average speed per intersection and total vehicle count
-average_speed = df_merged.groupby('location')['speed'].mean()
-total_vehicle_count = df_merged['vehicle_count'].sum()
-
-# Define traffic data dictionary using calculated data
+# Traffic data (example values)
 traffic_data = {
-    'Intersection A': {'traffic_volume': 30, 'average_speed': 50},
-    'Intersection B': {'traffic_volume': 50, 'average_speed': 60},
-    'Intersection C': {'traffic_volume': 40, 'average_speed': 45},
-    'Intersection D': {'traffic_volume': 20, 'average_speed': 55}
+    'Intersection A': {'traffic_volume': 30, 'average_speed': 50, 'vehicle_count': 20, 'light_status': 'green'},
+    'Intersection B': {'traffic_volume': 50, 'average_speed': 40, 'vehicle_count': 35, 'light_status': 'red'},
+    'Intersection C': {'traffic_volume': 40, 'average_speed': 45, 'vehicle_count': 25, 'light_status': 'yellow'},
+    'Intersection D': {'traffic_volume': 20, 'average_speed': 55, 'vehicle_count': 15, 'light_status': 'green'}
 }
 
-# Road network graph with distances between intersections
-graph = {
+# Road network graph with distances
+road_graph = {
     'Intersection A': {'Intersection B': 5, 'Intersection C': 10, 'Intersection D': 8},
     'Intersection B': {'Intersection A': 5, 'Intersection C': 4, 'Intersection D': 7},
     'Intersection C': {'Intersection A': 10, 'Intersection B': 4, 'Intersection D': 6},
     'Intersection D': {'Intersection A': 8, 'Intersection B': 7, 'Intersection C': 6}
 }
 
-# Calculate air quality penalty based on pollution levels
-def calculate_air_quality_penalty(co, no2, pm25):
-    co_penalty = co * 0.1   # Weight for CO
-    no2_penalty = no2 * 0.05 # Weight for NO2
-    pm25_penalty = pm25 * 0.02 # Weight for PM2.5
-    return co_penalty + no2_penalty + pm25_penalty
-
-# Calculate route weights with AI-based model
+# Calculate route weights using a RandomForest model
 def calculate_route_weights(graph, traffic_data, co, no2, pm25):
     route_weights = {}
     air_quality_penalty = calculate_air_quality_penalty(co, no2, pm25)
+    model = RandomForestRegressor(n_estimators=100)
+    
+    # Training data (hypothetical, replace with real-world data if available)
+    X_train = np.array([[20, 50, 1, 20], [30, 40, 0, 35], [40, 45, 0.5, 25]])  # [traffic_volume, speed, red_light_factor, vehicle_count]
+    y_train = np.array([5, 10, 15])  # Distance
+    model.fit(X_train, y_train)
     
     for start, neighbors in graph.items():
         for end, distance in neighbors.items():
             traffic_volume = traffic_data[start]['traffic_volume']
             avg_speed = traffic_data[start]['average_speed']
+            vehicle_count = traffic_data[start]['vehicle_count']
+            light_status = traffic_data[start]['light_status']
             
-            # AI-based model: simple linear regression (could be replaced with a pre-trained model)
-            features = np.array([[traffic_volume, avg_speed, air_quality_penalty]])
-            model = LinearRegression().fit(features, [distance])
+            red_light_factor = 1 if light_status == 'red' else (0.5 if light_status == 'yellow' else 0)
             
-            # Calculate weight as a function of traffic and air quality
-            weight = model.predict([[traffic_volume, avg_speed, air_quality_penalty]])[0]
+            # Predict weight using ML model
+            weight = model.predict([[traffic_volume, avg_speed, red_light_factor + air_quality_penalty, vehicle_count]])[0]
             route_weights[(start, end)] = weight
-            
+    
     return route_weights
 
-# Find optimal route using calculated weights
-def find_optimal_route_with_ai(start, end, graph, route_weights):
-    shortest_distances = {intersection: float('inf') for intersection in graph}
-    shortest_distances[start] = 0
-    visited_intersections = set()
-    previous_intersections = {}
-
-    while visited_intersections != set(graph):
-        current_intersection = min(
-            set(graph) - visited_intersections,
-            key=lambda intersection: shortest_distances[intersection]
-        )
-        visited_intersections.add(current_intersection)
-
+# Dijkstra’s algorithm for finding optimal route
+def find_optimal_route(start, end, graph, route_weights):
+    priority_queue = [(0, start)]  # (cumulative weight, intersection)
+    shortest_paths = {node: float('inf') for node in graph}
+    shortest_paths[start] = 0
+    previous_nodes = {}
+    
+    while priority_queue:
+        current_weight, current_intersection = heappop(priority_queue)
+        
+        if current_intersection == end:
+            break
+        
         for neighbor in graph[current_intersection]:
-            weight = route_weights[(current_intersection, neighbor)]
-            new_distance = shortest_distances[current_intersection] + weight
-            if new_distance < shortest_distances[neighbor]:
-                shortest_distances[neighbor] = new_distance
-                previous_intersections[neighbor] = current_intersection
-
-    # Retrieve optimal route
+            weight = route_weights.get((current_intersection, neighbor), float('inf'))
+            new_weight = current_weight + weight
+            
+            if new_weight < shortest_paths[neighbor]:
+                shortest_paths[neighbor] = new_weight
+                previous_nodes[neighbor] = current_intersection
+                heappush(priority_queue, (new_weight, neighbor))
+    
+    # Retrieve path
     route = []
-    current_intersection = end
-    while current_intersection != start:
-        route.insert(0, current_intersection)
-        current_intersection = previous_intersections[current_intersection]
+    current = end
+    while current in previous_nodes:
+        route.insert(0, current)
+        current = previous_nodes[current]
     route.insert(0, start)
-
-    return route, shortest_distances[end]
+    
+    return route, shortest_paths[end]
 
 # Main execution
 start_intersection = 'Intersection A'
 end_intersection = 'Intersection D'
 
-# Calculate route weights using AI model
-route_weights = calculate_route_weights(graph, traffic_data, average_co, average_no2, average_pm25)
+route_weights = calculate_route_weights(road_graph, traffic_data, average_co, average_no2, average_pm25)
+optimal_route, total_weight = find_optimal_route(start_intersection, end_intersection, road_graph, route_weights)
 
-# Find optimal route and total cost
-optimal_route, total_weight = find_optimal_route_with_ai(start_intersection, end_intersection, graph, route_weights)
-
-# Print and save results to JSON
+# Save results
 results = {
     "optimal_route": optimal_route,
     "total_weight": total_weight
 }
-
 print("Optimal Route:", optimal_route)
 print("Total Weight (Cost or Time):", total_weight)
 
-# Write to output JSON file
 with open('optimal_route_results.json', 'w') as f:
     json.dump(results, f)
