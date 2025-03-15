@@ -4,14 +4,14 @@ import json
 from sklearn.ensemble import RandomForestRegressor
 from heapq import heappop, heappush
 
-# Load air quality data from JSON file
-with open('air_quality_PROC.json', 'r') as file:
+# Load air quality data from JSON file (updated to match the new format)
+with open('sensor_data.json', 'r') as file:
     air_quality_data = json.load(file)
 
-# Calculate average air quality levels for penalty calculation
-average_co = np.mean([entry['data']['co'] for entry in air_quality_data])
-average_no2 = np.mean([entry['data'].get('no2', 0) for entry in air_quality_data])
-average_pm25 = np.mean([entry['data'].get('pm25', 0) for entry in air_quality_data])
+# Calculate average air quality levels for penalty calculation (updated to match the new format)
+average_co = np.mean([entry['co'] for entry in air_quality_data])
+average_no2 = np.mean([entry.get('no2', 0) for entry in air_quality_data])
+average_pm25 = np.mean([entry.get('pm25', 0) for entry in air_quality_data])
 
 # Define a function for air quality penalty
 def calculate_air_quality_penalty(co, no2, pm25):
