@@ -21,7 +21,7 @@ try:
     if collection_name == "SensorReadings":
         json_file_path = "../SimulatedDevices/Air_Quality_Sensor_Simulation/air_quality_sensor_data.json"
     elif collection_name == "OptimalRouteResults":
-        json_file_path = "optimal_route_results.json"
+        json_file_path = "../AI_routing_algorithm/optimal_route_results.json"
     else:
         raise ValueError("Unsupported collection name. Please use 'SensorReadings' or 'OptimalRouteResults'.")
 
