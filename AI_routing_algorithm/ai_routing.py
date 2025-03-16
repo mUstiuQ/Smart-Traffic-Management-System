@@ -2,8 +2,11 @@ import numpy as np
 import json
 from sklearn.ensemble import RandomForestRegressor
 from heapq import heappop, heappush
+from datetime import datetime
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
-# Load air quality data from JSON file
+# Load air quality data from the JSON file
 with open('sensor_data.json', 'r') as file:
     air_quality_data = json.load(file)
 
@@ -21,7 +24,7 @@ def calculate_air_quality_penalty(co, no2, pm25, temperature, humidity):
     penalty += (humidity * 0.01)
     return penalty
 
-# Load traffic data from JSON file
+# Load traffic data from the JSON file
 with open('intersection_data.json', 'r') as file:
     traffic_data = json.load(file)
 
@@ -46,20 +49,29 @@ road_graph = {
 }
 
 # Function to generate training data for RandomForest (using traffic and air quality data)
+def find_closest_timestamp(target, air_quality_data):
+    target_time = datetime.strptime(target, "%Y-%m-%d %H:%M:%S")
+    closest_entry = min(
+        air_quality_data,
+        key=lambda x: abs(datetime.strptime(x['timestamp'], "%Y-%m-%d %H:%M:%S") - target_time)
+    )
+    return closest_entry
+
+# Generate training data for RandomForest
 def generate_training_data(traffic_data, air_quality_data):
     X = []
     y = []
     
     for timestamp, entry in traffic_data.items():
-        # Find the corresponding air quality data entry for this timestamp
-        air_data_entry = next((ad for ad in air_quality_data if ad['timestamp'] == timestamp), None)
+        # Find the closest timestamp from `air_quality_data`
+        air_data_entry = find_closest_timestamp(timestamp, air_quality_data)
         if air_data_entry:
-            # Feature vector (traffic data + air quality penalties)
+            # Build the feature vector
             features = [
                 entry['traffic_volume'],
                 entry['average_speed'],
                 entry['vehicle_count'],
-                1 if entry['light_status'] == 'red' else 0,  # Red light factor
+                1 if entry['light_status'] == 'red' else 0,
                 entry['rain'],
                 air_data_entry['co'],
                 air_data_entry['no2'],
@@ -67,21 +79,47 @@ def generate_training_data(traffic_data, air_quality_data):
                 air_data_entry['temperature'],
                 air_data_entry['humidity']
             ]
-            
-            # Target variable (route weight, travel time, or distance; we'll assume it's distance here)
-            target = road_graph.get(timestamp, 0)  # Replace this with actual target data
+            # Add a dummy target value (you can modify it later with a real target)
+            target = 1
             
             X.append(features)
             y.append(target)
     
     return np.array(X), np.array(y)
 
-# Train RandomForest model
+# Train the RandomForest model
 X_train, y_train = generate_training_data(traffic_data_dict, air_quality_data)
 model = RandomForestRegressor(n_estimators=100)
-model.fit(X_train, y_train)
+print("X_train shape:", np.array(X_train).shape)
+print("y_train shape:", np.array(y_train).shape)
+print("X_train:", X_train)
+print("y_train:", y_train)
+print("X_train:", X_train)
+print("y_train:", y_train)
 
-# Calculate route weights using trained RandomForest model
+if isinstance(X_train, list):
+    X_train = np.array(X_train)
+if isinstance(y_train, list):
+    y_train = np.array(y_train)
+
+print("X_train shape:", X_train.shape)
+print("y_train shape:", y_train.shape)
+
+# Stop execution if the data is empty
+if X_train.size == 0 or y_train.size == 0:
+    raise ValueError("Error: X_train or y_train is empty")
+
+# Transform X_train to 2D if necessary
+if len(X_train.shape) == 1:
+    print("Reshape X_train to 2D")
+    X_train = X_train.reshape(-1, 1)
+
+print("New shape of X_train:", X_train.shape)
+model.fit(X_train, y_train)
+print("Final shape of X_train:", X_train.shape)
+print("Final shape of y_train:", y_train.shape)
+
+# Calculate route weights using the trained RandomForest model
 def calculate_route_weights(graph, traffic_data, air_quality_data, model):
     route_weights = {}
     
@@ -90,11 +128,13 @@ def calculate_route_weights(graph, traffic_data, air_quality_data, model):
             # Find the corresponding traffic and air quality data entry for this timestamp
             traffic_entry = traffic_data.get(start)
             if not traffic_entry:
+                print(f"Missing traffic data for {start}. Skipping this route.")
                 continue
             
             # Extract traffic and air quality data
             air_data_entry = next((ad for ad in air_quality_data if ad['timestamp'] == start), None)
             if not air_data_entry:
+                print(f"Missing air quality data for {start}. Skipping this route.")
                 continue
             
             # Feature vector for the model (traffic data + air quality data)
@@ -113,11 +153,14 @@ def calculate_route_weights(graph, traffic_data, air_quality_data, model):
             
             # Predict route weight using RandomForest model
             weight = model.predict(np.array(features).reshape(1, -1))[0]
+            if not np.isfinite(weight):
+                print(f"Invalid weight between {start} and {end}: {weight}. Setting default value.")
+                weight = 9999  # Large value to signal a penalty
             route_weights[(start, end)] = weight
     
     return route_weights
 
-# Dijkstra’s algorithm for finding optimal route
+# Dijkstra’s algorithm for finding the optimal route
 def find_optimal_route(start, end, graph, route_weights):
     priority_queue = [(0, start)]  # (cumulative weight, intersection)
     shortest_paths = {node: float('inf') for node in graph}
@@ -139,7 +182,11 @@ def find_optimal_route(start, end, graph, route_weights):
                 previous_nodes[neighbor] = current_intersection
                 heappush(priority_queue, (new_weight, neighbor))
     
-    # Retrieve path
+    print(f"Analyzing current intersection: {current_intersection}")
+    print(f"Current weight: {current_weight}")
+    print(f"Neighbors: {graph[current_intersection]}")
+
+    # Retrieve the path
     route = []
     current = end
     while current in previous_nodes:
@@ -162,14 +209,18 @@ route_weights = calculate_route_weights(
 )
 
 optimal_route, total_weight = find_optimal_route(start_intersection, end_intersection, road_graph, route_weights)
+print("Route Weights:", route_weights)
 
 # Save results
 results = {
     "optimal_route": optimal_route,
     "total_weight": total_weight
 }
+with open('optimal_route_results.json', 'w') as f:
+    json.dump(results, f, indent=4)
+print("THE RESULTS WERE SAVED in 'optimal_route_results.json'")
 print("Optimal Route:", optimal_route)
 print("Total Weight (Cost or Time):", total_weight)
 
-with open('optimal_route_results.json', 'w') as f:
+with open('optimal_route_results.json', 'w', encoding='utf-8') as f:
     json.dump(results, f)
