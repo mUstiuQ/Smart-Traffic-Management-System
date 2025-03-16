@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http;
+using System.Text.Json;
 using TrafficManagementApi.Models;
 using TrafficManagementApi.Services;
-using BCrypt.Net;
-
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using System.Security.Claims;
 
 namespace TrafficManagementApi.Controllers
 {
@@ -14,85 +13,90 @@ namespace TrafficManagementApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly MongoDbService _mongoDbService;
-        private readonly IConfiguration _configuration;
+        private readonly IOptions<Auth0Settings> _auth0Settings;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public AuthController(MongoDbService mongoDbService, IConfiguration configuration)
+        public AuthController(MongoDbService mongoDbService, IOptions<Auth0Settings> auth0Settings, IHttpClientFactory httpClientFactory)
         {
             _mongoDbService = mongoDbService;
-            _configuration = configuration;
+            _auth0Settings = auth0Settings;
+            _httpClientFactory = httpClientFactory;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(UserRegister userRegister)
-        {
-            // Check if email already exists
-            var existingUser = await _mongoDbService.GetUserByEmailAsync(userRegister.Email);
-            if (existingUser != null)
-            {
-                return BadRequest("Email already registered");
-            }
-
-            // Create new user
-            var user = new User
-            {
-                Username = userRegister.Username,
-                Email = userRegister.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRegister.Password)
-            };
-
-            await _mongoDbService.CreateUserAsync(user);
-            return Ok("User registered successfully");
-        }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login(UserLogin userLogin)
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleTokenRequest request)
         {
             try
             {
-                // Validate input
-                if (string.IsNullOrEmpty(userLogin.Email) || string.IsNullOrEmpty(userLogin.Password))
+                var payload = await ValidateGoogleToken(request.IdToken);
+                if (payload == null)
                 {
-                    Console.WriteLine("Login failed: Email and password are required");
-                    return BadRequest("Email and password are required");
+                    return Unauthorized("Invalid Google token");
                 }
 
-                // Find user by email
-                var user = await _mongoDbService.GetUserByEmailAsync(userLogin.Email);
+                // Check if user exists in database
+                var user = await _mongoDbService.GetUserByEmailAsync(payload.Email);
                 if (user == null)
                 {
-                    Console.WriteLine($"Login failed: User with email {userLogin.Email} not found");
-                    return BadRequest("Invalid email or password");
+                    // Create new user
+                    user = new User
+                    {
+                        Email = payload.Email,
+                        Username = payload.Name,
+                        Role = "user"
+                    };
+                    await _mongoDbService.CreateUserAsync(user);
                 }
 
-                // Verify password
-                bool passwordValid = BCrypt.Net.BCrypt.Verify(userLogin.Password, user.PasswordHash);
-                if (!passwordValid)
+                return Ok(new
                 {
-                    Console.WriteLine($"Login failed: Invalid password for user {userLogin.Email}");
-                    return BadRequest("Invalid email or password");
-                }
-
-                return Ok(new { message = "Login successful" });
+                    Email = user.Email,
+                    Username = user.Username,
+                    Role = user.Role
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Login error: {ex.Message}");
-                return StatusCode(500, "An error occurred during login");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
 
-        [HttpPost("logout")]
-        public IActionResult Logout()
+        private async Task<GoogleTokenPayload> ValidateGoogleToken(string idToken)
         {
-            // In a more sophisticated implementation, you might want to:
-            // 1. Add the token to a blacklist
-            // 2. Implement token revocation
-            // 3. Use refresh tokens that can be invalidated
-            
-            // For now, we'll just return a success response as the frontend handles the token removal
-            return Ok(new { message = "Logged out successfully" });
+            using var httpClient = _httpClientFactory.CreateClient();
+            var validationUrl = $"https://oauth2.googleapis.com/tokeninfo?id_token={idToken}";
+
+            var response = await httpClient.GetAsync(validationUrl);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var tokenInfo = JsonSerializer.Deserialize<GoogleTokenInfo>(content);
+
+            return new GoogleTokenPayload
+            {
+                Email = tokenInfo.Email,
+                Name = tokenInfo.Name
+            };
         }
 
-        
+        private class GoogleTokenInfo
+        {
+            public string Email { get; set; }
+            public string Name { get; set; }
+        }
+
+        public class GoogleTokenRequest
+        {
+            public string IdToken { get; set; }
+        }
+
+        public class GoogleTokenPayload
+        {
+            public string Email { get; set; }
+            public string Name { get; set; }
+        }
     }
 }
