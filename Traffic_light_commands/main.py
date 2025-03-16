@@ -1,7 +1,7 @@
 import numpy as np
-from traffic_env import TrafficEnv
 import json
 from azure.iot.hub import IoTHubRegistryManager
+from traffic_env import TrafficEnv
 
 # Function to load the connection string from a file
 def load_connection_string(filename="primary_connection_string.txt"):
@@ -27,31 +27,27 @@ def send_message_to_device(message):
     except Exception as e:
         print(f"Error sending message: {e}")
 
-def main():
-    # Load the optimal route from the JSON file
-    with open("../AI_routing_algorithm/optimal_route_results.json", 'r') as file:
-        optimal_route_data = json.load(file)
-        optimal_route = optimal_route_data["optimal_route"]
+# Load the optimal route from the JSON file
+with open("../AI_routing_algorithm/optimal_route_results.json", 'r') as file:
+    optimal_route_data = json.load(file)
+    optimal_route = optimal_route_data["optimal_route"]
 
-    # Determine the traffic light state based on the optimal route
-    traffic_light_states = ['Red'] * len(optimal_route)
-    if optimal_route:
-        first_intersection = optimal_route[0]
-        for i in range(len(optimal_route)):
-            intersection_name = f"Intersection {chr(ord('A') + i)}"
-            if intersection_name == first_intersection:
-                traffic_light_states[i] = 'Green'
+# Initialize the TrafficEnv environment
+env = TrafficEnv(num_intersections=len(optimal_route), optimal_route=optimal_route)
 
-    # Show the updated traffic light states
-    print("Updated Traffic Light States:")
-    for i, state in enumerate(traffic_light_states):
-        print(f"Intersection {chr(ord('A') + i)}: {state}")
+# Reset the environment to get the initial state
+initial_state = env.reset()
 
-    # Send the updated traffic light states to the device
-    message = json.dumps({
-        "traffic_light_states": traffic_light_states
-    })
-    send_message_to_device(message)
+# Determine the traffic light state based on the optimal route
+traffic_light_states = env.get_traffic_light_status()
 
-if __name__ == "__main__":
-    main()
+# Show the updated traffic light states
+print("Updated Traffic Light States:")
+for i, state in enumerate(traffic_light_states):
+    print(f"Intersection {chr(ord('A') + i)}: {state}")
+
+# Send the updated traffic light states to the device
+message = json.dumps({
+    "traffic_light_states": traffic_light_states
+})
+send_message_to_device(message)
