@@ -11,7 +11,8 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 
 const Sidebar = () => {
@@ -37,6 +38,7 @@ const Sidebar = () => {
     { name: 'Payment System', href: '/payment-system', icon: CurrencyDollarIcon },
     { name: 'Pollution Monitoring', href: '/pollution-monitoring', icon: CloudIcon },
     { name: 'Weather Conditions', href: '/weather-conditions', icon: ChartBarIcon },
+    { name: 'API Messages', href: '/messages', icon: EnvelopeIcon },
     { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
   ];
 
