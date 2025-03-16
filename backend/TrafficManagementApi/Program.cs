@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using TrafficManagementApi.Services;
+using TrafficManagementApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +10,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configure Auth0
+var auth0Settings = builder.Configuration.GetSection("Auth0").Get<Auth0Settings>();
+builder.Services.Configure<Auth0Settings>(builder.Configuration.GetSection("Auth0"));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.Authority = $"https://{auth0Settings.Domain}/";
+    options.Audience = auth0Settings.Audience;
+});
 
 // Configure MongoDB service
 var mongoConnectionString = builder.Configuration["MongoDB:ConnectionString"];
@@ -46,6 +64,7 @@ else
 
 // Apply CORS before other middleware
 app.UseCors("AllowNextJsApp");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
