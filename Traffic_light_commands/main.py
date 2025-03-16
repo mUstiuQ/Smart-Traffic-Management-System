@@ -38,16 +38,20 @@ env = TrafficEnv(num_intersections=len(optimal_route), optimal_route=optimal_rou
 # Reset the environment to get the initial state
 initial_state = env.reset()
 
-# Determine the traffic light state based on the optimal route
-traffic_light_states = env.get_traffic_light_status()
-
-# Show the updated traffic light states
-print("Updated Traffic Light States:")
-for i, state in enumerate(traffic_light_states):
-    print(f"Intersection {chr(ord('A') + i)}: {state}")
+# Update traffic light states based on the optimal route
+intersection_status = []  # List of dictionaries
+for i, intersection in enumerate(optimal_route):
+    intersection_name = f"Intersection {chr(ord('A') + i)}"
+    intersection_status.append({"name": intersection_name, "state": 'Green'})
+    print(f"{intersection_name}: Green")
+    # Reset previous intersection to Red if not the first one
+    if i > 0:
+        previous_intersection_name = f"Intersection {chr(ord('A') + i - 1)}"
+        intersection_status.append({"name": previous_intersection_name, "state": 'Red'})
+        print(f"{previous_intersection_name}: Red")
 
 # Send the updated traffic light states to the device
 message = json.dumps({
-    "traffic_light_states": traffic_light_states
+    "intersection_status": intersection_status  # List of dictionaries
 })
 send_message_to_device(message)
