@@ -6,6 +6,27 @@ from datetime import datetime
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
+road_graph = {
+    'Intersection A': {'Intersection B': 5, 'Intersection C': 10, 'Intersection D': 8},
+    'Intersection B': {'Intersection A': 5, 'Intersection C': 4, 'Intersection D': 7},
+    'Intersection C': {'Intersection A': 10, 'Intersection B': 4, 'Intersection D': 6},
+    'Intersection D': {'Intersection A': 8, 'Intersection B': 7, 'Intersection C': 6}
+}
+
+traffic_data_dict = {
+    'Intersection A': {'traffic_volume': 50, 'average_speed': 40, 'vehicle_count': 35, 'light_status': 'red', 'rain': 700},
+    'Intersection B': {'traffic_volume': 40, 'average_speed': 30, 'vehicle_count': 20, 'light_status': 'green', 'rain': 200},
+    'Intersection C': {'traffic_volume': 30, 'average_speed': 35, 'vehicle_count': 25, 'light_status': 'red', 'rain': 300},
+    'Intersection D': {'traffic_volume': 20, 'average_speed': 50, 'vehicle_count': 15, 'light_status': 'green', 'rain': 100}
+}
+
+air_quality_data = [
+    {'timestamp': 'Intersection A', 'co': 5, 'no2': 7, 'pm25': 12, 'temperature': 22, 'humidity': 50},
+    {'timestamp': 'Intersection B', 'co': 4, 'no2': 6, 'pm25': 10, 'temperature': 23, 'humidity': 55},
+    {'timestamp': 'Intersection C', 'co': 3, 'no2': 5, 'pm25': 8, 'temperature': 24, 'humidity': 60},
+    {'timestamp': 'Intersection D', 'co': 2, 'no2': 4, 'pm25': 6, 'temperature': 25, 'humidity': 65}
+]
+
 # Load air quality data from the JSON file
 with open('sensor_data.json', 'r') as file:
     air_quality_data = json.load(file)
@@ -41,12 +62,11 @@ traffic_data_dict = {
 }
 
 # Road network graph with distances
-road_graph = {
-    'Intersection A': {'Intersection B': 5, 'Intersection C': 10, 'Intersection D': 8},
-    'Intersection B': {'Intersection A': 5, 'Intersection C': 4, 'Intersection D': 7},
-    'Intersection C': {'Intersection A': 10, 'Intersection B': 4, 'Intersection D': 6},
-    'Intersection D': {'Intersection A': 8, 'Intersection B': 7, 'Intersection C': 6}
-}
+#   'Intersection A': {'Intersection B': 5, 'Intersection C': 10, 'Intersection D': 8},
+ #   'Intersection B': {'Intersection A': 5, 'Intersection C': 4, 'Intersection D': 7},
+  #  'Intersection C': {'Intersection A': 10, 'Intersection B': 4, 'Intersection D': 6},
+   # 'Intersection D': {'Intersection A': 8, 'Intersection B': 7, 'Intersection C': 6}
+#}
 
 # Function to generate training data for RandomForest (using traffic and air quality data)
 def find_closest_timestamp(target, air_quality_data):
@@ -169,12 +189,17 @@ def find_optimal_route(start, end, graph, route_weights):
     
     while priority_queue:
         current_weight, current_intersection = heappop(priority_queue)
+        print(f"Analyzing current intersection: {current_intersection} with weight: {current_weight}")
         
         if current_intersection == end:
             break
         
         for neighbor in graph[current_intersection]:
             weight = route_weights.get((current_intersection, neighbor), float('inf'))
+            if weight == float('inf'):
+                print(f"Missing route weight from {current_intersection} to {neighbor}. Skipping.")
+                continue
+
             new_weight = current_weight + weight
             
             if new_weight < shortest_paths[neighbor]:
@@ -194,6 +219,8 @@ def find_optimal_route(start, end, graph, route_weights):
         current = previous_nodes[current]
     route.insert(0, start)
     
+    if len(route) < 2:
+        print("Optimal route is too short. Check your data and weights.")
     return route, shortest_paths[end]
 
 # Main execution
